@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Codebase Analyzer</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;use 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        p {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #333;
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        input[type="url"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="url"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .stored-urls {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .stored-urls h2 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        .url-list {
+            list-style: none;
+        }
+
+        .url-item {
+            background: #f8f9fa;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            word-break: break-all;
+        }
+
+        .url-text {
+            color: #667eea;
+            font-size: 14px;
+            flex: 1;
+        }
+
+        .url-time {
+            color: #999;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .empty-state {
+            color: #999;
+            font-style: italic;
+            font-size: 14px;
+        }
+
+        .results-section {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .results-section h2 {
+            color: #333;
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        .explanation-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border-left: 4px solid #667eea;
+        }
+
+        .explanation-box h3 {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+
+        .explanation-text {
+            color: #555;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .diagram-box {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            overflow-x: auto;
+        }
+
+        .diagram-box h3 {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            background: transparent !important;
+        }
+        
+        pre.mermaid {
+            border: none;
+            padding: 0;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Codebase Analyzer</h1>
+        <p>Enter a Git repository URL to analyze</p>
+
+        <form id="urlForm">
+            <div class="input-group">
+                <label for="repoUrl">Repository URL</label>
+                <input 
+                    type="url" 
+                    id="repoUrl" 
+                    name="repoUrl" 
+                    placeholder="https://github.com/username/repo"
+                    required
+                >
+            </div>
+            <button type="submit">Submit</button>
+        </form>
+
+        <div class="success-message" id="successMessage">
+            ✓ URL saved successfully!
+        </div>
+
+        <div class="results-section">
+            <h2>Analysis Results</h2>
+            
+            <div class="explanation-box">
+                <h3>📝 Codebase Explanation</h3>
+                <div class="explanation-text" id="explanationText">
+                    <!-- Explanation will be inserted here -->
+                </div>
+            </div>
+
+            <div class="diagram-box">
+                <h3>📊 Architecture Diagram</h3>
+                <pre class="mermaid" id="mermaidDiagram">
+                    <!-- Mermaid diagram will be rendered here -->
+                </pre>
+            </div>
+        </div>
+
+        <div class="stored-urls">
+            <h2>Stored URLs</h2>
+            <ul class="url-list" id="urlList">
+                <li class="empty-state">No URLs stored yet</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('urlForm');
+        const urlInput = document.getElementById('repoUrl');
+        const successMessage = document.getElementById('successMessage');
+        const urlList = document.getElementById('urlList');
+
+        // Example explanation from fine-tuned model (Trainium output)
+        const exampleExplanation = `This is a Flask-based web application with a RESTful API architecture. The codebase follows a modular structure with clear separation of concerns.
+
+<strong>Core Components:</strong>
+
+• <strong>app.py</strong> - Main entry point that initializes the Flask application, registers blueprints, and configures middleware for authentication and logging.
+
+• <strong>models/</strong> - Contains database models using SQLAlchemy ORM. The User model handles authentication, while Product and Order models manage the e-commerce functionality.
+
+• <strong>routes/</strong> - API endpoints organized by feature:
+  - auth.py: Handles user registration, login, and JWT token generation
+  - products.py: CRUD operations for product management
+  - orders.py: Order creation and retrieval with user validation
+
+• <strong>services/</strong> - Business logic layer that processes data between routes and models. The payment_service.py integrates with Stripe API for payment processing.
+
+• <strong>utils/</strong> - Helper functions including validators.py for input validation and decorators.py for route protection with JWT authentication.
+
+• <strong>config.py</strong> - Centralized configuration management for database URLs, secret keys, and third-party API credentials loaded from environment variables.
+
+<strong>Data Flow:</strong>
+Requests come through routes → business logic in services → database operations via models → response back to client. Authentication middleware intercepts protected routes and validates JWT tokens before allowing access.`;
+
+        // Example Mermaid diagram
+        const exampleMermaid = `graph TB
+    Client[Client/Browser]
+    
+    subgraph "Flask Application"
+        App[app.py<br/>Main Application]
+        
+        subgraph "Routes Layer"
+            AuthRoute[auth.py<br/>Authentication]
+            ProdRoute[products.py<br/>Products API]
+            OrderRoute[orders.py<br/>Orders API]
+        end
+        
+        subgraph "Services Layer"
+            PaymentSvc[payment_service.py<br/>Stripe Integration]
+            AuthSvc[auth_service.py<br/>JWT Logic]
+        end
+        
+        subgraph "Models Layer"
+            UserModel[(User Model)]
+            ProdModel[(Product Model)]
+            OrderModel[(Order Model)]
+        end
+        
+        Config[config.py<br/>Configuration]
+        Utils[utils/<br/>Validators & Decorators]
+    end
+    
+    DB[(PostgreSQL<br/>Database)]
+    Stripe[Stripe API]
+    
+    Client -->|HTTP Request| App
+    App --> AuthRoute
+    App --> ProdRoute
+    App --> OrderRoute
+    
+    AuthRoute --> AuthSvc
+    ProdRoute --> ProdModel
+    OrderRoute --> OrderModel
+    OrderRoute --> PaymentSvc
+    
+    AuthSvc --> UserModel
+    PaymentSvc --> Stripe
+    
+    UserModel --> DB
+    ProdModel --> DB
+    OrderModel --> DB
+    
+    Config -.->|Configuration| App
+    Utils -.->|Helpers| AuthRoute
+    Utils -.->|Helpers| ProdRoute
+    Utils -.->|Helpers| OrderRoute
+    
+    style App fill:#667eea,stroke:#333,stroke-width:2px,color:#fff
+    style Client fill:#764ba2,stroke:#333,stroke-width:2px,color:#fff
+    style DB fill:#48bb78,stroke:#333,stroke-width:2px,color:#fff
+    style Stripe fill:#f6ad55,stroke:#333,stroke-width:2px,color:#fff`;
+
+        // Display example explanation and diagram on page load
+        displayExampleResults();
+
+        // Load stored URLs on page load
+        displayStoredUrls();
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const url = urlInput.value.trim();
+            
+            if (url) {
+                // Get existing URLs from localStorage
+                const storedUrls = getStoredUrls();
+                
+                // Add new URL with timestamp
+                storedUrls.push({
+                    url: url,
+                    timestamp: new Date().toISOString()
+                });
+                
+                // Save back to localStorage
+                localStorage.setItem('codebaseUrls', JSON.stringify(storedUrls));
+                
+                // Show success message
+                successMessage.style.display = 'block';
+                successMessage.textContent = '⏳ Step 1: Fetching code from GitHub...';
+                
+                // Clear input
+                urlInput.value = '';
+                
+                // Update display
+                displayStoredUrls();
+                
+                // Call backend to analyze URL (simulating complete workflow)
+                await analyzeRepositoryUrl(url);
+            }
+        });
+
+        function getStoredUrls() {
+            const stored = localStorage.getItem('codebaseUrls');
+            return stored ? JSON.parse(stored) : [];
+        }
+
+        function displayStoredUrls() {
+            const urls = getStoredUrls();
+            
+            if (urls.length === 0) {
+                urlList.innerHTML = '<li class="empty-state">No URLs stored yet</li>';
+                return;
+            }
+            
+            // Display URLs in reverse order (newest first)
+            urlList.innerHTML = urls.reverse().map(item => {
+                const date = new Date(item.timestamp);
+                const timeString = date.toLocaleString();
+                
+                return `
+                    <li class="url-item">
+                        <span class="url-text">${item.url}</span>
+                        <span class="url-time">${timeString}</span>
+                    </li>
+                `;
+            }).join('');
+        }
+
+        async function displayExampleResults() {
+            // Display explanation
+            const explanationEl = document.getElementById('explanationText');
+            explanationEl.innerHTML = exampleExplanation;
+
+            // Wait for mermaid to be available
+            const waitForMermaid = setInterval(async () => {
+                if (window.mermaid) {
+                    clearInterval(waitForMermaid);
+                    
+                    // Display mermaid diagram
+                    const mermaidEl = document.getElementById('mermaidDiagram');
+                    mermaidEl.innerHTML = exampleMermaid;
+                    mermaidEl.removeAttribute('data-processed');
+                    
+                    // Render the diagram
+                    try {
+                        await window.mermaid.run({
+                            querySelector: '.mermaid'
+                        });
+                    } catch (error) {
+                        console.error('Mermaid rendering error:', error);
+                    }
+                }
+            }, 50);
+        }
+
+        async function analyzeRepositoryUrl(repoUrl) {
+            try {
+                // Update progress messages
+                setTimeout(() => {
+                    successMessage.textContent = '⏳ Step 2: Analyzing with Trainium model...';
+                }, 3000);
+                
+                setTimeout(() => {
+                    successMessage.textContent = '⏳ Step 3: Generating Mermaid diagram...';
+                }, 6000);
+                
+                // Call backend API with URL (Full workflow: GitHub scraping → Trainium → Mermaid)
+                // Add timeout controller
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 180000); // 3 minute timeout
+                
+                const response = await fetch('http://localhost:5001/analyze-url', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        repo_url: repoUrl
+                    }),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                    throw new Error(errorData.error || `HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Update explanation (from "Trainium")
+                    const explanationEl = document.getElementById('explanationText');
+                    explanationEl.innerHTML = data.explanation.replace(/\n/g, '<br>');
+
+                    // Update mermaid diagram
+                    const mermaidEl = document.getElementById('mermaidDiagram');
+                    mermaidEl.innerHTML = data.mermaid;
+                    mermaidEl.removeAttribute('data-processed');
+
+                    // Re-render mermaid
+                    if (window.mermaid) {
+                        await window.mermaid.run({
+                            querySelector: '.mermaid'
+                        });
+                    }
+
+                    // Update success message
+                    successMessage.textContent = '✓ Analysis complete!';
+                    setTimeout(() => {
+                        successMessage.style.display = 'none';
+                    }, 3000);
+                } else {
+                    throw new Error(data.error || 'Failed to analyze repository');
+                }
+            } catch (error) {
+                console.error('Error analyzing repository:', error);
+                successMessage.textContent = '❌ Error: ' + error.message;
+                successMessage.style.background = '#f8d7da';
+                successMessage.style.color = '#721c24';
+                setTimeout(() => {
+                    successMessage.style.display = 'none';
+                    successMessage.style.background = '#d4edda';
+                    successMessage.style.color = '#155724';
+                }, 5000);
+            }
+        }
+
+        async function analyzeCodebase(explanation) {
+            try {
+                // Call backend API
+                const response = await fetch('http://localhost:5001/generate-diagram', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        explanation: explanation
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Update explanation
+                    const explanationEl = document.getElementById('explanationText');
+                    explanationEl.innerHTML = explanation;
+
+                    // Update mermaid diagram with generated code
+                    const mermaidEl = document.getElementById('mermaidDiagram');
+                    mermaidEl.innerHTML = data.mermaid;
+                    mermaidEl.removeAttribute('data-processed');
+
+                    // Re-render mermaid
+                    if (window.mermaid) {
+                        await window.mermaid.run({
+                            querySelector: '.mermaid'
+                        });
+                    }
+
+                    // Update success message
+                    successMessage.textContent = '✓ Analysis complete!';
+                    setTimeout(() => {
+                        successMessage.style.display = 'none';
+                    }, 3000);
+                } else {
+                    throw new Error(data.error || 'Failed to generate diagram');
+                }
+            } catch (error) {
+                console.error('Error analyzing codebase:', error);
+                successMessage.textContent = '❌ Error: ' + error.message;
+                successMessage.style.background = '#f8d7da';
+                successMessage.style.color = '#721c24';
+                setTimeout(() => {
+                    successMessage.style.display = 'none';
+                    successMessage.style.background = '#d4edda';
+                    successMessage.style.color = '#155724';
+                }, 5000);
+            }
+        }
+    </script>
+</body>
+</html>
